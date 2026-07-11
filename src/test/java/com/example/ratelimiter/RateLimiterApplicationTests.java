@@ -15,7 +15,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.data.redis.cluster.nodes=",
+    "spring.data.redis.host=localhost",
+    "spring.data.redis.port=6379",
+    "spring.data.redis.timeout=50ms"
+})
 @AutoConfigureMockMvc
 class RateLimiterApplicationTests {
 

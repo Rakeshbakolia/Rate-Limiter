@@ -17,7 +17,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.data.redis.cluster.nodes=",
+    "spring.data.redis.host=localhost",
+    "spring.data.redis.port=6379",
+    "spring.data.redis.timeout=50ms"
+})
 class RateLimiterResilienceTests {
 
     @Autowired
