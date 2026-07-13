@@ -20,7 +20,7 @@ graph TD
     end
     
     subgraph Redis Cluster
-        LettucePool -->|Route to slot using {clientId}| RedisNode[Redis Node]
+        LettucePool -->|"Route to slot using {clientId}"| RedisNode[Redis Node]
         RedisNode -->|Atomic Evaluation| LuaScript[progressive_lockout.lua]
     end
     
