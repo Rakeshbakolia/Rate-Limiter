@@ -4,7 +4,7 @@ A production-grade, distributed rate-limiting system built using **Java 21 Virtu
 
 ---
 
-## 1. High-Level Design (HLD)
+## 1. System High-Level Design (HLD)
 
 The rate limiter operates as an interceptor in the request-processing path. Every incoming API call is intercepted, client identification is extracted, and the rate limit state is evaluated against a Redis Cluster before the request is allowed to proceed to the controller.
 
