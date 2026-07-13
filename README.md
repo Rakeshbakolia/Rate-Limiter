@@ -10,22 +10,22 @@ The rate limiter operates as an interceptor in the request-processing path. Ever
 
 ```mermaid
 graph TD
-    Client[Client Request] -->|Extract X-Client-ID / IP| Filter[RateLimitFilter]
+    Client[Client Request] -->|Extract Client ID or IP| Filter[RateLimitFilter]
     
     subgraph Spring Boot 3.3 & Java 21 JVM
-        Filter -->|Bypass? /api/v1/admin/* or /actuator/*| Bypass{Bypass Path?}
+        Filter -->|Bypass path check| Bypass{Bypass Path?}
         Bypass -->|Yes| Controller[Test/Admin Controller]
         Bypass -->|No| Service[RateLimiterService]
-        Service -->|Execute wrapped in Micrometer Timer| LettucePool[Lettuce Connection Pool]
+        Service -->|Execute via Lettuce Pool| LettucePool[Lettuce Connection Pool]
     end
     
     subgraph Redis Cluster
-        LettucePool -->|"Route to slot using {clientId}"| RedisNode[Redis Node]
+        LettucePool -->|Route to slot using Client ID| RedisNode[Redis Node]
         RedisNode -->|Atomic Evaluation| LuaScript[progressive_lockout.lua]
     end
     
-    Service -->|Fail-Open Fallback on timeout| Bypass
-    LuaScript -->|Result: Allowed/Denied, Remaining, Penalty| Service
+    Service -->|Fail Open Fallback| Bypass
+    LuaScript -->|Evaluation Result| Service
     Service -->|Record Metrics| Micrometer[MeterRegistry]
     Micrometer -->|Scraped by Prometheus| Actuator[/actuator/prometheus]
 ```
@@ -45,16 +45,16 @@ graph TD
 stateDiagram-v2
     [*] --> Evaluating
     
-    Evaluating --> LockedOut : Strikes key lockout_expiry > current_time
-    LockedOut --> Blocked_429 : Return disallowed + remaining wait time
+    Evaluating --> LockedOut : Lockout active
+    LockedOut --> Blocked_429 : Return blocked response
     
-    Evaluating --> CheckTokens : No active lockout
-    CheckTokens --> Allowed_200 : Tokens >= Requested
-    Allowed_200 --> DeductTokens : Update tokens & last_updated in bucket
+    Evaluating --> CheckTokens : Lockout inactive
+    CheckTokens --> Allowed_200 : Sufficient tokens
+    Allowed_200 --> DeductTokens : Consume tokens and update bucket
     
-    CheckTokens --> LockedOut_Triggered : Tokens < Requested
+    CheckTokens --> LockedOut_Triggered : Tokens depleted
     LockedOut_Triggered --> EscalateStrikes : Increment strike count
-    EscalateStrikes --> Blocked_429 : Return disallowed + lockout duration (5m, 10m, 15m, 24h)
+    EscalateStrikes --> Blocked_429 : Apply progressive lockout duration
     
     Blocked_429 --> [*]
     Allowed_200 --> [*]
