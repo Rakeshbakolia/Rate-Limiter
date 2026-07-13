@@ -27,7 +27,7 @@ graph TD
     Service -->|Fail Open Fallback| Bypass
     LuaScript -->|Evaluation Result| Service
     Service -->|Record Metrics| Micrometer[MeterRegistry]
-    Micrometer -->|Scraped by Prometheus| Actuator[/actuator/prometheus]
+    Micrometer -->|Scraped by Prometheus| Actuator[Prometheus Endpoint]
 ```
 
 ### HLD Design Strengths:
